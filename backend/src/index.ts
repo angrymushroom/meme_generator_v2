@@ -1,8 +1,9 @@
-import express from 'express';
 import dotenv from 'dotenv';
-import memeRoutes from './routes/meme';
 
 dotenv.config();
+dotenv.config();
+import express from 'express';
+import memeRoutes from './routes/meme';
 
 const app = express();
 const port = process.env.PORT || 3001;
