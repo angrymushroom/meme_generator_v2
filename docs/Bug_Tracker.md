@@ -95,3 +95,25 @@ This document serves as a simple bug tracker for the Solana Meme Coin Generator 
 *   **Environment:** Local Devnet, Solana Explorer
 *   **Resolution:** Modified `backend/src/services/ipfs.ts` to return `https://gateway.pinata.cloud/ipfs/` URLs instead of `ipfs://` URIs for image and metadata, ensuring direct web accessibility for the token's visual assets.
 *   **Date Resolved:** 2025-07-10
+
+### Bug ID: BUG-006
+*   **Status:** Resolved
+*   **Severity:** High
+*   **Reported By:** User
+*   **Date Reported:** 2025-07-10
+*   **Description:** Meme coins were minted with a current supply of 0, making them invisible in user wallets despite being visible on Solana Explorer. This was due to the `createFungible` Umi instruction only creating the token mint, not minting an initial supply.
+*   **Affected Component(s):** Backend (Solana service), Frontend (user experience)
+*   **Environment:** Devnet, Mainnet
+*   **Resolution:** Modified `backend/src/services/solana.ts` to include `mintV1` instruction immediately after token creation, minting a user-specified initial supply to the service wallet's associated token account. Also added a frontend input field for users to define the initial supply.
+*   **Date Resolved:** 2025-07-10
+
+### Bug ID: BUG-007
+*   **Status:** Resolved
+*   **Severity:** High
+*   **Reported By:** User
+*   **Date Reported:** 2025-07-10
+*   **Description:** Encountered `MissingTokenOwnerAccount` error during token minting, indicating that the Associated Token Account (ATA) for the recipient wallet did not exist before attempting to mint tokens into it.
+*   **Affected Component(s):** Backend (Solana service)
+*   **Environment:** Devnet, Mainnet
+*   **Resolution:** Added `createAssociatedToken` instruction to the transaction builder in `backend/src/services/solana.ts` to ensure the ATA is created before tokens are minted into it.
+*   **Date Resolved:** 2025-07-10

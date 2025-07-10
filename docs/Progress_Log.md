@@ -27,6 +27,7 @@ This document tracks the development progress, completed tasks, and upcoming mil
     *   [x] Implement API endpoint for meme coin generation.
     *   [x] Integrate Pinata for IPFS image and metadata upload.
     *   [x] Implement Solana blockchain interaction for token creation and minting (Devnet & Mainnet).
+    *   [x] Implemented initial token supply minting and user-defined supply input.
 2.  **Frontend Development (Phase 1):**
     *   [x] Set up React application.
     *   [x] Develop user input form (name, symbol, description, image upload).

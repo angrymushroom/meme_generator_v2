@@ -5,11 +5,15 @@ import {
   generateSigner,
   percentAmount,
   PublicKey,
+  tokenAmount,
 } from '@metaplex-foundation/umi';
 import {
   createFungible,
   mplTokenMetadata,
+  mintV1,
+  TokenStandard,
 } from '@metaplex-foundation/mpl-token-metadata';
+import { findAssociatedTokenPda, createAssociatedToken } from '@metaplex-foundation/mpl-toolbox';
 import { fromWeb3JsKeypair } from '@metaplex-foundation/umi-web3js-adapters';
 import * as web3 from '@solana/web3.js';
 import bs58 from 'bs58'; // Corrected import
@@ -51,24 +55,46 @@ export class SolanaService {
   async createMemeCoin(
     name: string,
     symbol: string,
-    uri: string
+    uri: string,
+    supply: number
   ): Promise<PublicKey> {
     try {
-      // Generate a new keypair for the mint account.
       const mint = generateSigner(this.umi);
       console.log('New token mint address:', mint.publicKey);
 
-      // Use the Umi builder to create the token and metadata in one transaction
-      const tx = await createFungible(this.umi, {
+      const destinationAta = findAssociatedTokenPda(this.umi, {
+        mint: mint.publicKey,
+        owner: this.umi.identity.publicKey,
+      });
+
+      // Create a transaction builder that does everything at once.
+      await createFungible(this.umi, {
         mint,
         name,
         symbol,
         uri,
-        sellerFeeBasisPoints: percentAmount(0), // No royalties
-        decimals: 9, // Standard for SPL tokens
-      }).sendAndConfirm(this.umi);
+        sellerFeeBasisPoints: percentAmount(0),
+        decimals: 9,
+      })
+      // Add the instruction to create the associated token account.
+      .add(
+        createAssociatedToken(this.umi, {
+        mint: mint.publicKey,
+        owner: this.umi.identity.publicKey,
+      })
+      )
+      .add(
+        mintV1(this.umi, {
+          mint: mint.publicKey,
+          token: destinationAta,
+          amount: BigInt(supply) * BigInt(10 ** 9),
+          authority: this.umi.identity,
+          tokenStandard: TokenStandard.Fungible,
+        })
+      )
+      .sendAndConfirm(this.umi);
 
-      console.log('Successfully created token.', bs58.encode(tx.signature));
+      console.log(`Successfully created token and minted ${supply} to ${destinationAta[0]}.`);
 
       return mint.publicKey;
     } catch (error) {

@@ -12,6 +12,7 @@ const MemeForm: React.FC<MemeFormProps> = ({ onSubmit, loading, result, error })
   const [name, setName] = useState('');
   const [symbol, setSymbol] = useState('');
   const [description, setDescription] = useState('');
+  const [supply, setSupply] = useState<number>(1_000_000_000); // Default to 1 billion
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageSizeError, setImageSizeError] = useState<string | null>(null);
@@ -57,7 +58,7 @@ const MemeForm: React.FC<MemeFormProps> = ({ onSubmit, loading, result, error })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !symbol || !description || !image) {
+    if (!name || !symbol || !description || !image || !supply) {
       alert('Please fill in all fields and select an image.');
       return;
     }
@@ -71,6 +72,7 @@ const MemeForm: React.FC<MemeFormProps> = ({ onSubmit, loading, result, error })
     formData.append('name', name);
     formData.append('symbol', symbol);
     formData.append('description', description);
+    formData.append('supply', supply.toString());
     formData.append('image', image);
 
     onSubmit(formData);
@@ -110,6 +112,18 @@ const MemeForm: React.FC<MemeFormProps> = ({ onSubmit, loading, result, error })
           rows={4}
           required
         ></textarea>
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="supply">Initial Supply:</label>
+        <input
+          type="number"
+          id="supply"
+          value={supply}
+          onChange={(e) => setSupply(Number(e.target.value))}
+          min="1"
+          required
+        />
       </div>
 
       <div className="form-group">

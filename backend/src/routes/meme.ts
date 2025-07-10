@@ -23,9 +23,9 @@ router.post('/generate-meme-coin', upload.single('image'), async (req, res) => {
     return res.status(400).json({ error: 'Image file is required.' });
   }
 
-  const { name, symbol, description } = req.body;
+  const { name, symbol, description, supply } = req.body;
 
-  if (!name || !symbol || !description) {
+  if (!name || !symbol || !description || !supply) {
     return res.status(400).json({ error: 'Name, symbol, and description are required.' });
   }
 
@@ -56,7 +56,7 @@ router.post('/generate-meme-coin', upload.single('image'), async (req, res) => {
     console.log('Metadata uploaded to IPFS:', metadataUri);
 
     // 4. Create meme coin on Solana
-    const mintAddress = await solanaService.createMemeCoin(name, symbol, metadataUri);
+    const mintAddress = await solanaService.createMemeCoin(name, symbol, metadataUri, supply);
     console.log('Meme coin created on Solana:', mintAddress);
 
     res.status(200).json({
