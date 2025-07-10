@@ -11,11 +11,13 @@ This document tracks the development progress, completed tasks, and upcoming mil
 
 ## Completed Tasks:
 
-- [x] Initial project setup and repository creation.
-- [ ] Defined Product Manager (PM) documentation.
-- [ ] Defined Developer (Dev) documentation.
-- [ ] Incorporated beginner pain points and future solutions into PM documentation.
-- [ ] Refined documentation based on Q&A regarding token parameters and private key management.
+- [x] Initial project setup and repository creation, committed to Git.
+- [x] Defined Product Manager (PM) documentation.
+- [x] Defined Developer (Dev) documentation.
+- [x] Incorporated beginner pain points and future solutions into PM documentation.
+- [x] Refined documentation based on Q&A regarding token parameters and private key management.
+- [x] Implemented cost estimation feature in backend and integrated into frontend.
+- [x] Resolved backend build errors and improved frontend image preview.
 
 ## Upcoming Milestones:
 
