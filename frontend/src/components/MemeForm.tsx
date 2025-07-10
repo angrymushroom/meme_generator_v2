@@ -123,7 +123,7 @@ const MemeForm: React.FC<MemeFormProps> = ({ onSubmit, loading, result, error })
         />
         {imagePreview && (
           <div className="image-preview">
-            <img src={imagePreview} alt="Image Preview" />
+            <img src={imagePreview} alt="Meme preview" />
           </div>
         )}
         {imageSizeError && <p className="error-message">{imageSizeError}</p>}
