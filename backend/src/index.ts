@@ -1,7 +1,6 @@
 import dotenv from 'dotenv';
 
 dotenv.config();
-dotenv.config();
 import express from 'express';
 import memeRoutes from './routes/meme';
 
