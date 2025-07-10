@@ -1,0 +1,15 @@
+# Node.js
+node_modules
+.env
+
+# TypeScript
+*.tsbuildinfo
+
+# React
+build
+
+# Backend
+backend/dist
+
+# macOS
+.DS_Store
