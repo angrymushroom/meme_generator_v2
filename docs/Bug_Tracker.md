@@ -26,7 +26,7 @@ This document serves as a simple bug tracker for the Solana Meme Coin Generator 
 ## Recorded Bugs:
 
 ### Example Bug: BUG-001
-*   **Status:** Open
+*   **Status:** Resolved
 *   **Severity:** Medium
 *   **Reported By:** Gemini CLI
 *   **Date Reported:** 2025-07-10
@@ -41,5 +41,24 @@ This document serves as a simple bug tracker for the Solana Meme Coin Generator 
 *   **Affected Component(s):** Frontend
 *   **Environment:** Local Devnet
 *   **Screenshots/Logs (if applicable):** N/A
-*   **Resolution:** N/A
+*   **Resolution:** Implemented client-side image size validation and preview logic. Previews are now shown for images up to 2MB, with a warning for images exceeding 500KB (backend limit).
+    *   Date Resolved: 2025-07-10
 
+### Bug ID: BUG-002
+*   **Status:** Resolved
+*   **Severity:** Critical
+*   **Reported By:** User
+*   **Date Reported:** 2025-07-10
+*   **Description:**
+    *   The backend project fails to build due to TypeScript errors, specifically related to incorrect import paths (leading spaces) and type mismatches when interacting with the Umi and Metaplex token metadata libraries. This prevents the backend server from starting.
+    *   The frontend then receives an HTML error page instead of JSON data when trying to fetch the estimated cost, leading to "Error estimating cost: Unexpected token '<', "<!DOCTYPE "... is not valid JSON".
+    *   Steps to reproduce:
+        1.  Run `npm start` in the root directory.
+        2.  Observe the backend build failure in the terminal.
+        3.  Open the frontend in a browser (http://localhost:3000).
+        4.  Observe the "Error estimating cost: Unexpected token '<', "<!DOCTYPE "... is not valid JSON" message.
+*   **Affected Component(s):** Backend, Frontend (due to backend failure)
+*   **Environment:** Local Devnet
+*   **Screenshots/Logs (if applicable):** See npm terminal logs provided by user.
+*   **Resolution:** Rewrote Solana token creation logic in `backend/src/services/solana.ts` to exclusively use the Umi framework, resolving TypeScript errors and ensuring proper backend build and functionality. Updated `backend/src/routes/meme.ts` to reflect the new `createMemeCoin` function signature.
+    *   Date Resolved: 2025-07-10

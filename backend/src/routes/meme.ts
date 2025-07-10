@@ -1,10 +1,22 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { uploadImageToIPFS, uploadJsonToIPFS } from '../services/ipfs';
-import { createMemeCoin } from '../services/solana';
+import { SolanaService } from '../services/solana';
+
+const solanaService = new SolanaService();
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 500 * 1024 } }); // 500KB limit
+
+router.get('/estimate-cost', async (req, res) => {
+  try {
+    const cost = await solanaService.estimateMintCost();
+    res.status(200).json({ cost });
+  } catch (error: any) {
+    console.error('Error estimating cost:', error);
+    res.status(500).json({ error: error.message || 'Failed to estimate cost.' });
+  }
+});
 
 router.post('/generate-meme-coin', upload.single('image'), async (req, res) => {
   if (!req.file) {
@@ -44,7 +56,7 @@ router.post('/generate-meme-coin', upload.single('image'), async (req, res) => {
     console.log('Metadata uploaded to IPFS:', metadataUri);
 
     // 4. Create meme coin on Solana
-    const mintAddress = await createMemeCoin(name, symbol, description, imageUri, metadataUri);
+    const mintAddress = await solanaService.createMemeCoin(name, symbol, metadataUri);
     console.log('Meme coin created on Solana:', mintAddress);
 
     res.status(200).json({

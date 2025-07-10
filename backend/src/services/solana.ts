@@ -1,104 +1,90 @@
-import { Connection, Keypair, PublicKey, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
-import { createMint, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { createCreateMetadataAccountV3Instruction, PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
+import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
+import {
+  createSignerFromKeypair,
+  signerIdentity,
+  generateSigner,
+  percentAmount,
+  PublicKey,
+} from '@metaplex-foundation/umi';
+import {
+  createFungible,
+  mplTokenMetadata,
+} from '@metaplex-foundation/mpl-token-metadata';
+import { fromWeb3JsKeypair } from '@metaplex-foundation/umi-web3js-adapters';
+import * as web3 from '@solana/web3.js';
+import bs58 from 'bs58'; // Corrected import
+import dotenv from 'dotenv';
 
-const solanaRpcUrl = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
-const serviceWalletPrivateKey = process.env.SERVICE_WALLET_PRIVATE_KEY;
+dotenv.config();
 
-const connection = new Connection(solanaRpcUrl, 'confirmed');
+// Define a service for Solana interactions
+export class SolanaService {
+  private umi: any;
+  private serviceKeypair: web3.Keypair;
 
-const getServiceWallet = (): Keypair => {
-  if (!serviceWalletPrivateKey) {
-    throw new Error("SERVICE_WALLET_PRIVATE_KEY is not set in environment variables.");
+  constructor() {
+    // Initialize Umi with your cluster API and the MPL Token Metadata plugin
+    this.umi = createUmi(process.env.SOLANA_RPC_ENDPOINT!).use(mplTokenMetadata());
+
+    // Load the service keypair from the environment variable
+    const privateKey = process.env.PRIVATE_KEY;
+    if (!privateKey) {
+      throw new Error('Missing PRIVATE_KEY environment variable');
+    }
+    this.serviceKeypair = web3.Keypair.fromSecretKey(bs58.decode(privateKey));
+
+    // Convert the web3.js keypair to a Umi signer and set it as the identity
+    const umiSigner = createSignerFromKeypair(
+      this.umi,
+      fromWeb3JsKeypair(this.serviceKeypair)
+    );
+    this.umi.use(signerIdentity(umiSigner));
   }
-  // Assuming the private key is a base58 encoded string
-  const decoded = Buffer.from(serviceWalletPrivateKey, 'base64');
-  return Keypair.fromSecretKey(decoded);
-};
 
-export const createMemeCoin = async (
-  name: string,
-  symbol: string,
-  description: string,
-  imageUri: string,
-  metadataUri: string
-): Promise<string> => {
-  const serviceWallet = getServiceWallet();
+  /**
+   * Creates a new meme coin with metadata and mints the initial supply.
+   * @param name The name of the token.
+   * @param symbol The symbol of the token.
+   * @param uri The URI for the token's metadata JSON.
+   * @returns A promise that resolves with the new token's public key (mint address).
+   */
+  async createMemeCoin(
+    name: string,
+    symbol: string,
+    uri: string
+  ): Promise<PublicKey> {
+    try {
+      // Generate a new keypair for the mint account.
+      const mint = generateSigner(this.umi);
+      console.log('New token mint address:', mint.publicKey);
 
-  // 1. Create new token mint
-  const mint = await createMint(
-    connection,
-    serviceWallet, // Payer
-    serviceWallet.publicKey, // Mint Authority
-    serviceWallet.publicKey, // Freeze Authority
-    9 // Decimals
-  );
+      // Use the Umi builder to create the token and metadata in one transaction
+      const tx = await createFungible(this.umi, {
+        mint,
+        name,
+        symbol,
+        uri,
+        sellerFeeBasisPoints: percentAmount(0), // No royalties
+        decimals: 9, // Standard for SPL tokens
+      }).sendAndConfirm(this.umi);
 
-  console.log(`Created new token mint: ${mint.toBase58()}`);
+      console.log('Successfully created token.', bs58.encode(tx.signature));
 
-  // 2. Get or create associated token account for the service wallet
-  const associatedTokenAccount = await getOrCreateAssociatedTokenAccount(
-    connection,
-    serviceWallet, // Payer
-    mint,
-    serviceWallet.publicKey // Owner
-  );
+      return mint.publicKey;
+    } catch (error) {
+      console.error('Error creating meme coin:', error);
+      throw new Error('Could not create meme coin');
+    }
+  }
 
-  console.log(`Created associated token account: ${associatedTokenAccount.address.toBase58()}`);
-
-  // 3. Mint initial supply to the associated token account
-  const totalTokens = 1_000_000_000; // 1,000,000 tokens with 9 decimals
-  await mintTo(
-    connection,
-    serviceWallet, // Payer
-    mint,
-    associatedTokenAccount.address,
-    serviceWallet.publicKey, // Mint Authority
-    totalTokens
-  );
-
-  console.log(`Minted ${totalTokens} tokens to ${associatedTokenAccount.address.toBase58()}`);
-
-  // 4. Create metadata account
-  const metadataPDA = PublicKey.findProgramAddressSync(
-    [
-      Buffer.from("metadata"),
-      TOKEN_METADATA_PROGRAM_ID.toBuffer(),
-      mint.toBuffer(),
-    ],
-    TOKEN_METADATA_PROGRAM_ID
-  )[0];
-
-  const transaction = new Transaction().add(
-    createCreateMetadataAccountV3Instruction(
-      {
-        metadata: metadataPDA,
-        mint: mint,
-        mintAuthority: serviceWallet.publicKey,
-        payer: serviceWallet.publicKey,
-        updateAuthority: serviceWallet.publicKey,
-      },
-      {
-        createMetadataAccountArgsV3: {
-          data: {
-            name: name,
-            symbol: symbol,
-            uri: metadataUri,
-            sellerFeeBasisPoints: 0,
-            creators: null,
-            collection: null,
-            uses: null,
-          },
-          isMutable: true,
-          collectionDetails: null,
-        },
-      }
-    )
-  );
-
-  await sendAndConfirmTransaction(connection, transaction, [serviceWallet]);
-
-  console.log(`Created metadata account for token: ${mint.toBase58()}`);
-
-  return mint.toBase58(); // Return the mint address
-};
+  /**
+   * Estimates the cost of minting a new token.
+   * @returns A promise that resolves to the estimated cost in SOL.
+   */
+  async estimateMintCost(): Promise<number> {
+    // This is a simplified estimation. A more accurate one would calculate the
+    // rent-exempt reserve for the mint and metadata accounts.
+    const estimatedCost = 0.05; // Example cost in SOL
+    return estimatedCost;
+  }
+}

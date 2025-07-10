@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../styles/App.css'; // Assuming App.css will contain general styles
 
 interface MemeFormProps {
@@ -14,18 +14,44 @@ const MemeForm: React.FC<MemeFormProps> = ({ onSubmit, loading, result, error })
   const [description, setDescription] = useState('');
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageSizeError, setImageSizeError] = useState<string | null>(null);
+  const [estimatedCost, setEstimatedCost] = useState<number | null>(null);
+  const [costLoading, setCostLoading] = useState<boolean>(true);
+  const [costError, setCostError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchEstimatedCost = async () => {
+      try {
+        const response = await fetch('/api/estimate-cost');
+        if (!response.ok) {
+          throw new Error('Failed to fetch estimated cost.');
+        }
+        const data = await response.json();
+        setEstimatedCost(data.cost);
+      } catch (err: any) {
+        setCostError(err.message);
+      } finally {
+        setCostLoading(false);
+      }
+    };
+
+    fetchEstimatedCost();
+  }, []);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      if (file.size > 500 * 1024) { // 500KB limit
-        alert('Image size exceeds 500KB. Please choose a smaller image.');
-        setImage(null);
-        setImagePreview(null);
-        return;
-      }
       setImage(file);
       setImagePreview(URL.createObjectURL(file));
+
+      if (file.size > 2 * 1024 * 1024) { // 2MB preview limit
+        setImageSizeError('Image is too large for preview. Max 2MB.');
+        setImagePreview(null);
+      } else if (file.size > 500 * 1024) { // 500KB backend limit
+        setImageSizeError('Image size exceeds 500KB. It will be rejected by the backend.');
+      } else {
+        setImageSizeError(null);
+      }
     }
   };
 
@@ -33,6 +59,11 @@ const MemeForm: React.FC<MemeFormProps> = ({ onSubmit, loading, result, error })
     e.preventDefault();
     if (!name || !symbol || !description || !image) {
       alert('Please fill in all fields and select an image.');
+      return;
+    }
+
+    if (image.size > 500 * 1024) {
+      setImageSizeError('Image size exceeds 500KB. Please choose a smaller image.');
       return;
     }
 
@@ -94,6 +125,15 @@ const MemeForm: React.FC<MemeFormProps> = ({ onSubmit, loading, result, error })
           <div className="image-preview">
             <img src={imagePreview} alt="Image Preview" />
           </div>
+        )}
+        {imageSizeError && <p className="error-message">{imageSizeError}</p>}
+      </div>
+
+      <div className="cost-estimation">
+        {costLoading && <p>Estimating creation cost...</p>}
+        {costError && <p className="error-message">Error estimating cost: {costError}</p>}
+        {estimatedCost !== null && (
+          <p>Estimated creation cost: {estimatedCost.toFixed(6)} SOL (Devnet)</p>
         )}
       </div>
 
