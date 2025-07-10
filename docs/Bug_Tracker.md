@@ -62,3 +62,36 @@ This document serves as a simple bug tracker for the Solana Meme Coin Generator 
 *   **Screenshots/Logs (if applicable):** See npm terminal logs provided by user.
 *   **Resolution:** Rewrote Solana token creation logic in `backend/src/services/solana.ts` to exclusively use the Umi framework, resolving TypeScript errors and ensuring proper backend build and functionality. Updated `backend/src/routes/meme.ts` to reflect the new `createMemeCoin` function signature.
     *   Date Resolved: 2025-07-10
+
+### Bug ID: BUG-003
+*   **Status:** Resolved
+*   **Severity:** High
+*   **Reported By:** User
+*   **Date Reported:** 2025-07-10
+*   **Description:** Backend failed to start due to `TypeError: Cannot read properties of undefined (reading 'rpcEndpoint')` when initializing Umi, indicating `SOLANA_RPC_ENDPOINT` was not loaded. This was caused by the `.env` file being in the root directory while `dotenv` was configured to look in the `backend` directory, and a mismatch in the environment variable name (`SOLANA_RPC_URL` vs `SOLANA_RPC_ENDPOINT`).
+*   **Affected Component(s):** Backend
+*   **Environment:** Local Devnet
+*   **Resolution:** Corrected the environment variable name in `.env` from `SOLANA_RPC_URL` to `SOLANA_RPC_ENDPOINT`. Instructed user to place `.env` file directly in the `backend` directory for proper loading by `dotenv`.
+*   **Date Resolved:** 2025-07-10
+
+### Bug ID: BUG-004
+*   **Status:** Resolved
+*   **Severity:** Medium
+*   **Reported By:** User
+*   **Date Reported:** 2025-07-10
+*   **Description:** Frontend displayed "Error estimating cost: Unexpected token '<', "<!DOCTYPE "... is not valid JSON" when trying to fetch cost estimation. This occurred because the frontend was making API requests to its own domain (`localhost:3000/api`) while the backend was listening on a different port (`localhost:3001`). The frontend was receiving an HTML error page from its own server instead of JSON from the backend.
+*   **Affected Component(s):** Frontend
+*   **Environment:** Local Devnet
+*   **Resolution:** Added a `proxy` configuration to `frontend/package.json` to redirect `/api` requests to `http://localhost:3001`, ensuring frontend API calls reach the backend server.
+*   **Date Resolved:** 2025-07-10
+
+### Bug ID: BUG-005
+*   **Status:** Resolved
+*   **Severity:** Medium
+*   **Reported By:** User
+*   **Date Reported:** 2025-07-10
+*   **Description:** After successful meme coin creation, the token icon was not visible on Solana Explorer. This was due to the IPFS URIs being returned in the `ipfs://` format, which some platforms (like Solana Explorer's caching) might not reliably resolve for displaying images.
+*   **Affected Component(s):** Backend (IPFS service)
+*   **Environment:** Local Devnet, Solana Explorer
+*   **Resolution:** Modified `backend/src/services/ipfs.ts` to return `https://gateway.pinata.cloud/ipfs/` URLs instead of `ipfs://` URIs for image and metadata, ensuring direct web accessibility for the token's visual assets.
+*   **Date Resolved:** 2025-07-10

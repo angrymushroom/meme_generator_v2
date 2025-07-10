@@ -17,7 +17,7 @@ export const uploadImageToIPFS = async (imageBuffer: Buffer, fileName: string): 
         'pinata_secret_api_key': pinataApiSecret,
       },
     });
-    return `ipfs://${res.data.IpfsHash}`;
+    return `https://gateway.pinata.cloud/ipfs/${res.data.IpfsHash}`;
   } catch (error) {
     console.error("Error uploading image to IPFS:", error);
     throw new Error("Failed to upload image to IPFS.");
@@ -33,7 +33,7 @@ export const uploadJsonToIPFS = async (jsonContent: any, fileName: string): Prom
         'pinata_secret_api_key': pinataApiSecret,
       },
     });
-    return `ipfs://${res.data.IpfsHash}`;
+    return `https://gateway.pinata.cloud/ipfs/${res.data.IpfsHash}`;
   } catch (error) {
     console.error("Error uploading JSON to IPFS:", error);
     throw new Error("Failed to upload JSON to IPFS.");

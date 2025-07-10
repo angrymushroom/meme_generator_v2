@@ -18,6 +18,7 @@ This document tracks the development progress, completed tasks, and upcoming mil
 - [x] Refined documentation based on Q&A regarding token parameters and private key management.
 - [x] Implemented cost estimation feature in backend and integrated into frontend.
 - [x] Resolved backend build errors and improved frontend image preview.
+- [x] Resolved environment variable loading, frontend API proxy, and IPFS image display issues.
 
 ## Upcoming Milestones:
 
